@@ -1,10 +1,5 @@
-com/mycompany/chat/MainJFrame$4.class
-ServerChat.class
-com/mycompany/chat/EmployeeChat.class
-com/mycompany/chat/MainJFrame.class
-com/mycompany/chat/MainJFrame$2.class
+com/mycompany/chat/ServerJobChat.class
+com/mycompany/chat/ServerJobChat$ClientHandler.class
+com/mycompany/chat/EmployeeChat$2.class
 com/mycompany/chat/EmployeeChat$1.class
-com/mycompany/chat/MainJFrame$3.class
-Employee.class
-com/mycompany/chat/MainJFrame$1.class
-ServerJobChat.class
+com/mycompany/chat/EmployeeChat.class
