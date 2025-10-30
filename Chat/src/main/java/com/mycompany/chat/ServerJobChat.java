@@ -7,29 +7,71 @@ import java.util.concurrent.*;
 
 public class ServerJobChat {
 
-    private static final int PORT = 5000; // port do komunikacji
-    private static final Set<PrintWriter> clientWriters = ConcurrentHashMap.newKeySet();
+    private static final int PORT = 2011;
+    private static final Set<ClientHandler> clients = ConcurrentHashMap.newKeySet();
+    private static int employeeCounter = 0;
 
     public static void main(String[] args) {
         System.out.println("Chat Server uruchomiony na porcie " + PORT);
+
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             while (true) {
-                Socket clientSocket = serverSocket.accept();
-                System.out.println("Nowy klient: " + clientSocket);
-                new Thread(new ClientHandler(clientSocket)).start();
+                Socket socket = serverSocket.accept();
+
+                employeeCounter++;
+                String userName = "Employee" + employeeCounter;
+                ClientHandler handler = new ClientHandler(socket, userName);
+                new Thread(handler).start();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    static void broadcast(String message) {
+        for (ClientHandler client : clients) {
+            client.send(message);
+        }
+        System.out.println("" + message);
+    }
+
+    static void updateUserLists() {
+        StringBuilder sb = new StringBuilder("[USERS]");
+        for (ClientHandler c : clients) {
+            sb.append(" ").append(c.getUserName());
+        }
+        String listMsg = sb.toString();
+        for (ClientHandler c : clients) {
+            c.send(listMsg);
+        }
+    }
+
+    static void sendPrivate(String recipient, String message) {
+        for (ClientHandler client : clients) {
+            if (client.getUserName().equals(recipient)) {
+                client.send(message);
+                break;
+            }
+        }
+    }
+
     private static class ClientHandler implements Runnable {
-        private Socket socket;
+        private final Socket socket;
         private PrintWriter out;
         private BufferedReader in;
+        private final String userName;
 
-        ClientHandler(Socket socket) {
+        ClientHandler(Socket socket, String userName) {
             this.socket = socket;
+            this.userName = userName;
+        }
+
+        String getUserName() {
+            return userName;
+        }
+
+        void send(String msg) {
+            if (out != null) out.println(msg);
         }
 
         @Override
@@ -37,21 +79,34 @@ public class ServerJobChat {
             try {
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 out = new PrintWriter(socket.getOutputStream(), true);
-                clientWriters.add(out);
 
-                String message;
-                while ((message = in.readLine()) != null) {
-                    System.out.println(" " + message);
-                    for (PrintWriter writer : clientWriters) {
-                        writer.println(message);
+                clients.add(this);
+                broadcast("[SERVER] " + userName + " dołączył do czatu.");
+                updateUserLists();
+
+                String line;
+                while ((line = in.readLine()) != null) {
+                    if (line.startsWith("[PRIVATE]")) {
+                        String[] parts = line.split(":", 2);
+                        if (parts.length == 2) {
+                            String[] header = parts[0].split(" ");
+                            String recipient = header[1];
+                            String content = parts[1].trim();
+                            sendPrivate(recipient, "[PRYWATNA] od " + userName + ": " + content);
+                        }
+                    } else {
+                        broadcast(userName + ": " + line);
                     }
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println("Klient rozłączony: " + userName);
             } finally {
-                try { socket.close(); } catch (IOException ignored) {}
-                clientWriters.remove(out);
-                System.out.println("Klient rozłączony.");
+                clients.remove(this);
+                broadcast("[SERVER] " + userName + " opuścił czat.");
+                updateUserLists();
+                try {
+                    socket.close();
+                } catch (IOException ignored) {}
             }
         }
     }

@@ -1,5 +1,7 @@
 com/mycompany/chat/ServerJobChat.class
 com/mycompany/chat/ServerJobChat$ClientHandler.class
-com/mycompany/chat/EmployeeChat$2.class
-com/mycompany/chat/EmployeeChat$1.class
-com/mycompany/chat/EmployeeChat.class
+com/mycompany/chat/Employee$1.class
+com/mycompany/chat/Employee$PrivateChatWindow.class
+com/mycompany/chat/Employee$2.class
+com/mycompany/chat/Employee$PrivateChatWindow$1.class
+com/mycompany/chat/Employee.class
